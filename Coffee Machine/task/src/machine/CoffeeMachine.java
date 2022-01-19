@@ -7,35 +7,49 @@ public class CoffeeMachine {
 
     public static void main(String[] args) {
 
-        /*System.out.printf("Starting to make a coffee%n" +
-                "Grinding coffee beans%n" +
-                "Boiling water%n" +
-                "Mixing boiled water with crushed coffee beans%n" +
-                "Pouring coffee into the cup%n" +
-                "Pouring some milk into the cup%n" +
-                "Coffee is ready!");*/
+        //quantities needed per cup of coffee
+        final int WATER_NEEDED_PER_CUP = 200;
+        final int MILK_NEEDED_PER_CUP = 50;
+        final int BEANS_NEEDED_PER_CUP = 15;
+        int[] ingredientsNeededPerCup = {WATER_NEEDED_PER_CUP, MILK_NEEDED_PER_CUP,
+                BEANS_NEEDED_PER_CUP};
+
+        System.out.println("Write how many ml of water the coffee machine has:");
+        int totalWater = scanner.nextInt();
+        System.out.println("Write how many ml of milk the coffee machine has:");
+        int totalMilk = scanner.nextInt();
+        System.out.println("Write how many grams of coffee beans the coffee" +
+                "machine has:");
+        int totalBeans = scanner.nextInt();
         System.out.println("Write how many cups of coffee you will need:");
-
         int cupsNeeded = scanner.nextInt();
-        int[] ingredients = ingredientsNeeded(cupsNeeded);
 
-        System.out.printf("For %d cups of coffee you will need:%n", cupsNeeded);
-        System.out.printf("%d ml of water%n", ingredients[0]);
-        System.out.printf("%d ml of milk%n", ingredients[1]);
-        System.out.printf("%d g of coffee beans%n", ingredients[2]);
+        int cupsBrewed = cupsBrewed(cupsNeeded, totalWater, totalMilk, totalBeans,
+                ingredientsNeededPerCup);
+
+        if (cupsBrewed < cupsNeeded) {
+            System.out.printf("No, I can make only %d cup(s) of coffee%n", cupsBrewed);
+        } else if (cupsBrewed > cupsNeeded) {
+            System.out.printf("Yes, I can make that amount of coffee (and even" +
+                    " %d more than that)%n", cupsBrewed - cupsNeeded);
+        } else if (cupsBrewed == cupsNeeded) {
+            System.out.printf("Yes, I can make that amount of coffee%n");
+        }
     }
 
-    public static int[] ingredientsNeeded(int cupsNeeded){
+    public static int cupsBrewed(int cupsNeeded, int machineWater,
+                                 int machineMilk, int machineBeans, int[] ingrPerCup) {
 
-        //quantities needed per cup of coffee
-        final int WATER_NEEDED = 200;
-        final int MILK_NEEDED = 50;
-        final int BEANS_NEEDED = 15;
+        int[] ingredientsOnHand = {machineWater, machineMilk, machineBeans};
 
-        int totalWater = WATER_NEEDED * cupsNeeded;
-        int totalMilk = MILK_NEEDED * cupsNeeded;
-        int totalBeans = BEANS_NEEDED * cupsNeeded;
+        int cupsBrewed = ingredientsOnHand[0] / ingrPerCup[0];
 
-        return new int[]{totalWater, totalMilk, totalBeans};
+        for (int i = 1; i < ingredientsOnHand.length; i++) {
+            if (ingredientsOnHand[i] / ingrPerCup[i] < cupsBrewed) {
+                cupsBrewed = ingredientsOnHand[i] / ingrPerCup[i];
+            }
+        }
+
+        return cupsBrewed;
     }
 }
