@@ -4,48 +4,36 @@ import java.util.Scanner;
 
 public class Machine {
 
-    private static Coffee espresso = new Coffee("espresso", 250,
-            0, 16, 4);
-    private static Coffee latte = new Coffee("latte", 350,
-            75, 20, 7);
-    private static Coffee cappuccino = new Coffee("cappuccino", 200,
-            100, 12, 6);
-
     public static final Scanner scanner = new Scanner(System.in);
 
     MachineState machineState = MachineState.PROMPTING;
 
-    public static int machineWater = 400;
-    public static int machineMilk = 540;
-    public static int machineBeans = 120;
     public static int machineMoney = 550;
-    public static int machineCups = 9;
+    //machineIngredients order needs to match order of CoffeeTypes costs order.
+    public static int[] machineIngredients = {400, 540, 120, 9};
 
     public boolean machineOn = true;
 
     public void printMachineStats() {
 
+        int index = 0;
         System.out.println("The coffee machine has:");
-        System.out.printf("%d ml of water%n", machineWater);
-        System.out.printf("%d ml of milk%n", machineMilk);
-        System.out.printf("%d g of coffee beans%n", machineBeans);
-        System.out.printf("%d disposable cups%n", machineCups);
+        for (ResourceUnits resources: ResourceUnits.values()) {
+            System.out.printf("%d %s of %s%n", machineIngredients[index],
+                    resources.getUnit(), resources.getDisplayName());
+            index++;
+        }
         System.out.printf("$%d of money%n%n", machineMoney);
-
     }
 
     private void fillMachine() {
-
-        System.out.println("Write how many ml of water you want to add:");
-        machineWater += scanner.nextInt();
-        System.out.println("Write how many ml of milk you want to add:");
-        machineMilk += scanner.nextInt();
-        System.out.println("Write how many grams of coffee beans you " +
-                "want to add:");
-        machineBeans += scanner.nextInt();
-        System.out.println("Write how many disposable cups of coffee " +
-                "you want to add:");
-        machineCups += scanner.nextInt();
+        int index = 0;
+        for (ResourceUnits resources: ResourceUnits.values()) {
+            System.out.printf("Write how many %s of %s you want to add:%n",
+                    resources.getUnit(), resources.getDisplayName());
+            machineIngredients[index] += scanner.nextInt();
+            index++;
+        }
         System.out.println();
     }
 
@@ -55,18 +43,17 @@ public class Machine {
 
         switch (machineState) {
             case PROMPTING:
-                System.out.println("Write action (buy, fill, take, remaining, exit):");
+                printPromptMenu();
                 userInput = scanner.next().toUpperCase();
                 break;
             case BUY:
-                System.out.println("What do you want to buy? 1 - espresso, " +
-                        "2 - latte, 3 - cappuccino:");
-
+                printBuyMenu();
                 String coffeeChoice = scanner.next().toLowerCase();
 
                 if (coffeeChoice.equalsIgnoreCase("back")) {
                     machineState = MachineState.PROMPTING;
                     return;
+
                 } else {
                     buyCoffee(Integer.parseInt(coffeeChoice));
                 }
@@ -88,6 +75,31 @@ public class Machine {
         machineState = MachineState.valueOf(userInput);
     }
 
+    private void printPromptMenu() {
+        System.out.print("Write action (");
+        for (MachineState state: MachineState.values()) {
+           if (state.name().equals("PROMPTING")){
+               break;
+           }
+           else if (state.ordinal() == MachineState.values().length - 2){
+               System.out.printf("%s):%n", state.name().toLowerCase());
+               break;
+           }
+           System.out.printf("%s, ", state.name().toLowerCase());
+
+        }
+    }
+
+    private void printBuyMenu() {
+        System.out.print("What do you want to buy? ");
+
+        for (CoffeeTypes coffeeType : CoffeeTypes.values()) {
+            System.out.printf("%d - %s, ",coffeeType.getIndex(),coffeeType.name().toLowerCase());
+        }
+
+        System.out.print("back - to main menu:");
+    }
+
     private void takeMoney() {
         System.out.printf("I gave you $%d", machineMoney);
         machineMoney = 0;
@@ -99,52 +111,27 @@ public class Machine {
 
     private static void buyCoffee(int coffeeChoice) {
 
-        Coffee coffeeChosen;
+        CoffeeTypes coffee = CoffeeTypes.valueOfIndex(coffeeChoice);
+        String[] costNames = coffee.getCostNames();
+        int[] coffeeCosts = coffee.getCosts();
 
-        switch (coffeeChoice) {
-            case 1:
-                coffeeChosen = Machine.espresso;
-                break;
-            case 2:
-                coffeeChosen = Machine.latte;
-                break;
-            case 3:
-                coffeeChosen = Machine.cappuccino;
-                break;
-            default:
-                coffeeChosen = new Coffee("default", 0,
-                        0, 0, 0);
-                break;
+        for (int i = 0; i < coffeeCosts.length; i++){
+            if (machineIngredients[i] < coffeeCosts[i]){
+                System.out.printf("Sorry, not enough %s!%n", costNames[i]);
+                return;
+            }
         }
 
-        //make sure enough ingredients remain
-        if (machineWater < coffeeChosen.waterCost) {
-            System.out.println("Sorry, not enough water!");
-            System.out.println();
-            return;
-        } else if (machineMilk < coffeeChosen.milkCost) {
-            System.out.println("Sorry, not enough milk!");
-            System.out.println();
-            return;
-        } else if (machineBeans < coffeeChosen.beanCost) {
-            System.out.println("Sorry, not enough beans!");
-            System.out.println();
-            return;
-        } else if (machineCups == 0) {
-            System.out.println("Sorry, not enough cups!");
-            System.out.println();
-            return;
+        for (int i = 0; i < coffeeCosts.length; i++){
+            machineIngredients[i] -= coffeeCosts[i];
         }
 
-        machineMilk -= coffeeChosen.milkCost;
-        machineBeans -= coffeeChosen.beanCost;
-        machineWater -= coffeeChosen.waterCost;
-        machineMoney += coffeeChosen.price;
-        machineCups--;
+        machineMoney += coffee.getPrice();
 
         System.out.println("I have enough resources, making you a coffee!");
         System.out.println();
     }
+
 
     enum MachineState {
         BUY,
@@ -152,6 +139,6 @@ public class Machine {
         TAKE,
         REMAINING,
         EXIT,
-        PROMPTING
+        PROMPTING //prompting must remain last option
     }
 }
